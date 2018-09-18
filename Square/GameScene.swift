@@ -14,8 +14,6 @@ import simd
 class GameScene: SKScene {
     // assets
     var centralBox: SKSpriteNode!
-    let yOffset: CGFloat = 50
-    let xOffset: CGFloat = 50
     struct HSBShifter {
         var value: CGFloat
         var phase: Bool
@@ -25,6 +23,7 @@ class GameScene: SKScene {
     let ringNumber: Int = 3
     let squareSize = CGSize(width: 40, height: 40)
     var rings: [[SKSpriteNode]] = []
+    var orbits: [[CGPoint]] = []
   
     override func didMove(to view: SKView) {
         // Called when the scene has been displayed
@@ -37,10 +36,11 @@ class GameScene: SKScene {
         // initialize our boxes
         
         for index in 1...ringNumber {
-            rings.append(boxMaker(ringLevel: index, boxSize: squareSize, center: sceneCenter))
+            rings.append(boxMaker(ringLevel: index, center: sceneCenter))
+            orbits.append(createOrbits(ringLevel: index, center: sceneCenter))
         }
-        for boxes in rings {
-            for item in boxes {
+        for index in 1...rings.count {
+            for item in rings[index - 1] {
                 addChild(item)
             }
         }
@@ -72,19 +72,47 @@ class GameScene: SKScene {
         rainbowAlpha = shiftHSB(shift: rainbowAlpha, step: 0.01)
     }
     
-    func boxMaker(ringLevel: Int, boxSize: CGSize, center: CGPoint) -> [SKSpriteNode] {
+    func boxMaker(ringLevel: Int, center: CGPoint) -> [SKSpriteNode] {
         var boxes: [SKSpriteNode] = []
         for row in -ringLevel...ringLevel {
             for col in -ringLevel...ringLevel {
                 if !(abs(row) < ringLevel && abs(col) < ringLevel) {
-                    let box = SKSpriteNode(texture: nil, color: .black, size: boxSize)
-                    box.position.y = center.y + (yOffset * CGFloat(row))
-                    box.position.x = center.x + (xOffset * CGFloat(col))
+                    let box = SKSpriteNode(texture: nil, color: .black, size: squareSize)
+                    box.position.y = center.y + ((squareSize.height * 1.25) * CGFloat(row))
+                    box.position.x = center.x + ((squareSize.width * 1.25) * CGFloat(col))
                     boxes.append(box)
                 }
             }
         }
         return boxes
+    }
+    
+    // TODO: improve this by simply collecting points from box creation and sort them clockwise
+    func createOrbits(ringLevel: Int, center: CGPoint) -> [CGPoint] {
+        var pointerPoint = CGPoint(x: 0, y: 0)
+        var orbit: [CGPoint] = []
+        let xStep: CGFloat = (squareSize.width * 1.25)
+        let yStep: CGFloat = (squareSize.height * 1.25)
+        pointerPoint = CGPoint(x: center.x - (xStep * CGFloat(ringLevel)), y: center.y - (yStep * CGFloat(ringLevel)))
+        orbit.append(pointerPoint)
+        for _ in 1...(2 * ringLevel) {
+            pointerPoint.y += yStep
+            orbit.append(pointerPoint)
+        }
+        for _ in 1...(2 * ringLevel) {
+            pointerPoint.x += xStep
+            orbit.append(pointerPoint)
+        }
+        for _ in 1...(2 * ringLevel) {
+            pointerPoint.y += -yStep
+            orbit.append(pointerPoint)
+        }
+        for _ in 1...(2 * ringLevel) {
+            pointerPoint.x += -xStep
+            orbit.append(pointerPoint)
+        }
+        orbit.removeLast()
+        return orbit
     }
     
     func shiftHSB(shift: HSBShifter, step: CGFloat) -> HSBShifter {
@@ -103,12 +131,29 @@ class GameScene: SKScene {
         return returnHSB
     }
     
-    // this function gives each square the appropriate vector required to circle around the screen
+    // this function tells each square in each ring to travel to the next point recorded in orbits
     func orbit(_ planet: SKSpriteNode, radius: Int) {
+        var nextPoint: CGPoint?
+        for index in 1...orbits[radius - 1].count {
+            if orbits[radius - 1][index - 1] == planet.position {
+                if index == orbits[radius - 1].count {
+                    nextPoint = orbits[radius - 1][0]
+                } else {
+                    nextPoint = orbits[radius - 1][index]
+                }
+            }
+        }
+        if let assignedPoint = nextPoint {
+            let slide = SKAction.move(to: assignedPoint, duration: 1.0)
+            planet.run(slide)
+        }
+    }
+    
+    /*
+    // this function gives each square the appropriate vector required to circle around the screen
+    func orbitVector(_ planet: SKSpriteNode, radius: Int) {
         // shift coordinates to a system centered on the center of the screen
-        let xSpan = self.size.width / 2
-        let ySpan = self.size.height / 2
-        let zero = CGPoint(x: xSpan, y: ySpan)
+        let zero = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         let distance = CGFloat(50 * radius)
         let positionVector = simd_double2(x: Double(planet.position.x - zero.x), y: Double(planet.position.y - zero.y))
         let rotationAngle = Double.pi / 4
@@ -134,43 +179,16 @@ class GameScene: SKScene {
             // quadrant 2, going up; includes y = 0 from origin to negative x
             aim = CGPoint(x: zero.x - distance, y: zero.y + distance)
             time = TimeInterval(abs((aim?.y)! - planet.position.y) / 50)
+        } else {
+            print("fml")
         }
         
         if let assignedAim = aim, let assignedTime = time {
             let slide = SKAction.move(to: assignedAim, duration: assignedTime)
+            print("Assigned square to move to coords (\(assignedAim.x), \(assignedAim.y)) over \(assignedTime) seconds")
             planet.run(slide)
         }
-        
-        /*
-        if abs(planet.position.x - centerX) < goal {
-            if planet.position.y > centerY {
-                // then we must be on the top of our square orbit, going right
-                let aim = CGPoint(x: centerX + goal, y: centerY + goal)
-                let time = TimeInterval(abs(aim.x - planet.position.x) / 50)
-                let slide = SKAction.move(to: aim, duration: time)
-                planet.run(slide)
-            } else if planet.position.y < centerY {
-                // then we must be on the bottom of our square orbit, going left
-                let aim = CGPoint(x: centerX - goal, y: centerY - goal)
-                let time = TimeInterval(abs(aim.x - planet.position.x) / 50)
-                let slide = SKAction.move(to: aim, duration: time)
-                planet.run(slide)
-            }
-        } else if abs(planet.position.y - centerY) < goal {
-            if planet.position.x > centerX {
-                // then we must be on the right of our square orbit, going down
-                let aim = CGPoint(x: centerX + goal, y: centerY - goal)
-                let time = TimeInterval(abs(aim.y - planet.position.y) / 50)
-                let slide = SKAction.move(to: aim, duration: time)
-                planet.run(slide)
-            } else if planet.position.x < centerX {
-                // then we must be on the left of our square orbit, going up
-                let aim = CGPoint(x: centerX - goal, y: centerY + goal)
-                let time = TimeInterval(abs(aim.y - planet.position.y) / 50)
-                let slide = SKAction.move(to: aim, duration: time)
-                planet.run(slide)
-            }
-        }
-        */
     }
+    */
+    
 }
