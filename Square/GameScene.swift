@@ -20,17 +20,17 @@ class GameScene: SKScene {
     }
     var rainbowHue = HSBShifter(value: 0.0, phase: true)
     var rainbowAlpha = HSBShifter(value: 1.0, phase: false)
-    let ringNumber: Int = 3
+    let ringNumber: Int = Int.random(in: 1...6)
     let squareSize = CGSize(width: 40, height: 40)
     var rings: [[SKSpriteNode]] = []
     var orbits: [[CGPoint]] = []
+    var count: Int = 0
   
     override func didMove(to view: SKView) {
         // Called when the scene has been displayed
         let sceneCenter = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         centralBox = SKSpriteNode(texture: nil, color: .white, size: squareSize)
-        centralBox.position.y = sceneCenter.y
-        centralBox.position.x = sceneCenter.x
+        centralBox.position = sceneCenter
         addChild(centralBox)
         
         // initialize our boxes
@@ -44,11 +44,13 @@ class GameScene: SKScene {
                 addChild(item)
             }
         }
+        
     }
     
   
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
+        
         var shiftHue = rainbowHue
         var currentLevel = 1
         for boxes in rings {
@@ -63,13 +65,18 @@ class GameScene: SKScene {
             }
             currentLevel += 1
         }
-        
+ 
         let centralHSB = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: rainbowAlpha.value)
         centralBox.color = centralHSB
         centralBox.colorBlendFactor = 1.0
         
         rainbowHue = shiftHSB(shift: rainbowHue, step: 0.002)
         rainbowAlpha = shiftHSB(shift: rainbowAlpha, step: 0.01)
+        
+    }
+    
+    func random(_ range: Range<Int>) -> Int {
+        return Int.random(in: range)
     }
     
     func boxMaker(ringLevel: Int, center: CGPoint) -> [SKSpriteNode] {

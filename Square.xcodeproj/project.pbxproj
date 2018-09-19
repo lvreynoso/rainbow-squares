@@ -99,6 +99,7 @@
 				TargetAttributes = {
 					D8A7EBE8214AA9C30022E043 = {
 						CreatedOnToolsVersion = 9.4.1;
+						LastSwiftMigration = 1000;
 					};
 				};
 			};
@@ -293,7 +294,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.webdevils.Square-Lucia";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -311,7 +312,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.webdevils.Square-Lucia";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
