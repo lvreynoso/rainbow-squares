@@ -1,6 +1,6 @@
 //
 //  GameScene.swift
-//  Square
+//  Rainbow-Squares
 //
 //  Created by Lucia Reynoso on 9/17/18.
 //  Copyright © 2018 Lucia Reynoso. All rights reserved.
@@ -8,8 +8,6 @@
 
 import SpriteKit
 import GameplayKit
-import Accelerate
-import simd
 
 class GameScene: SKScene {
     // assets
@@ -24,7 +22,6 @@ class GameScene: SKScene {
     let squareSize = CGSize(width: 40, height: 40)
     var rings: [[SKSpriteNode]] = []
     var orbits: [[CGPoint]] = []
-    var count: Int = 0
   
     override func didMove(to view: SKView) {
         // Called when the scene has been displayed
@@ -37,9 +34,10 @@ class GameScene: SKScene {
         
         for index in 1...ringNumber {
             rings.append(boxMaker(ringLevel: index, center: sceneCenter))
-            // orbits.append(createOrbits(ringLevel: index, center: sceneCenter))
         }
+        
         for index in 1...rings.count {
+            // sort orbit points by angle
             orbits[index - 1].sort {
                 if atan2(($0.x - sceneCenter.x), ($0.y - sceneCenter.y)) < atan2(($1.x - sceneCenter.x), ($1.y - sceneCenter.y)) {
                     return true
@@ -82,10 +80,6 @@ class GameScene: SKScene {
         
     }
     
-    func random(_ range: Range<Int>) -> Int {
-        return Int.random(in: range)
-    }
-    
     func boxMaker(ringLevel: Int, center: CGPoint) -> [SKSpriteNode] {
         var boxes: [SKSpriteNode] = []
         var orbit: [CGPoint] = []
@@ -109,13 +103,11 @@ class GameScene: SKScene {
         if (returnHSB.value >= 1.0 && returnHSB.phase == true) || (returnHSB.value <= 0.0 && returnHSB.phase == false) {
             returnHSB.phase = !returnHSB.phase
         }
-        else {
-            switch returnHSB.phase {
-            case true:
-                returnHSB.value += step
-            case false:
-                returnHSB.value -= step
-            }
+        switch returnHSB.phase {
+        case true:
+            returnHSB.value += step
+        case false:
+            returnHSB.value -= step
         }
         return returnHSB
     }
