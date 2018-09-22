@@ -18,7 +18,7 @@ class GameScene: SKScene {
     }
     var rainbowHue = HSBShifter(value: 0.0, phase: true)
     var rainbowAlpha = HSBShifter(value: 1.0, phase: false)
-    let ringNumber: Int = Int.random(in: 1...6)
+    let ringNumber: Int = 3 //Int.random(in: 1...6)
     let squareSize = CGSize(width: 40, height: 40)
     var rings: [[SKSpriteNode]] = []
     var orbits: [[CGPoint]] = []
